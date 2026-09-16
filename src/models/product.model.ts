@@ -7,8 +7,32 @@ export interface Product {
   price: number;
 }
 
-export const getAllProducts = async (): Promise<Product[]> => {
-  const result = await pool.query("SELECT * FROM products ORDER BY id");
+export const getAllProducts = async (
+  maxPrice?: number,
+  page: number = 1,
+  limit: number = 10
+): Promise<Product[]> => {
+  const offset = (page - 1) * limit;
+
+  if (maxPrice !== undefined) {
+    const result = await pool.query(
+      `SELECT * FROM products
+       WHERE price <= $1
+       ORDER BY id
+       LIMIT $2 OFFSET $3`,
+      [maxPrice, limit, offset]
+    );
+
+    return result.rows;
+  }
+
+  const result = await pool.query(
+    `SELECT * FROM products
+     ORDER BY id
+     LIMIT $1 OFFSET $2`,
+    [limit, offset]
+  );
+
   return result.rows;
 };
 
